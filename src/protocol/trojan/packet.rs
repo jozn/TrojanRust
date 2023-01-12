@@ -3,16 +3,15 @@ use crate::protocol::common::atype::Atype;
 use crate::protocol::common::request::InboundRequest;
 use crate::protocol::trojan::base::CRLF;
 use crate::protocol::trojan::parser::parse_udp;
-use crate::transport::grpc_stream::GrpcDataReaderStream;
-use crate::transport::grpc_transport::Hunk;
+// use crate::transport::grpc_stream::GrpcDataReaderStream;
 
 use log::debug;
 use std::io::{self, Cursor, Error, ErrorKind};
 use std::net::{IpAddr, SocketAddr};
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 use tokio::net::UdpSocket;
-use tokio::sync::mpsc::Sender;
-use tonic::Streaming;
+// use tokio::sync::mpsc::Sender;
+// use tonic::Streaming;
 
 /// Define the size of the buffer used to transport the data back and forth
 const BUF_SIZE: usize = 4096;
@@ -144,78 +143,6 @@ pub async fn copy_udp_server_reader_to_client_writer<
     mut server_reader: R,
     mut client_writer: W,
 ) -> io::Result<()> {
-    let mut read_buf = vec![0u8; BUF_SIZE];
-
-    loop {
-        let header = parse_udp(&mut server_reader).await?;
-
-        server_reader
-            .read_exact(&mut read_buf[..header.payload_size])
-            .await?;
-
-        client_writer
-            .write_all(&read_buf[..header.payload_size])
-            .await?;
-    }
-}
-
-pub async fn copy_client_reader_to_server_grpc_writer<R: AsyncRead + Unpin>(
-    mut client_reader: R,
-    server_writer: Sender<Hunk>,
-    request: InboundRequest,
-) -> io::Result<()> {
-    loop {
-        let mut read_buf = vec![0u8; BUF_SIZE];
-
-        let n = client_reader.read(&mut read_buf).await?;
-
-        read_buf.truncate(n);
-
-        let mut cursor = Cursor::new(vec![0u8; 512]);
-
-        cursor.write_u8(request.atype as u8).await?;
-
-        match request.addr_port.ip {
-            IpAddress::IpAddr(IpAddr::V4(addr)) => {
-                cursor.write_all(&addr.octets()).await?;
-            }
-            IpAddress::IpAddr(IpAddr::V6(addr)) => {
-                cursor.write_all(&addr.octets()).await?;
-            }
-            IpAddress::Domain(ref domain) => {
-                cursor.write_u8(domain.as_bytes().len() as u8).await?;
-                cursor.write_all(domain.as_bytes()).await?;
-            }
-        }
-
-        cursor.write_u16(request.addr_port.port).await?;
-        cursor.write_u16(n as u16).await?;
-        cursor.write_u16(CRLF).await?;
-
-        let (pos, mut header) = (cursor.position(), cursor.into_inner());
-        header.truncate(pos as usize);
-
-        if let Err(_) = server_writer.send(Hunk { data: header }).await {
-            return Err(Error::new(
-                ErrorKind::ConnectionReset,
-                "Failed to send GRPC packet",
-            ));
-        }
-
-        if let Err(_) = server_writer.send(Hunk { data: read_buf }).await {
-            return Err(Error::new(
-                ErrorKind::ConnectionReset,
-                "Failed to send GRPC packet",
-            ));
-        }
-    }
-}
-
-pub async fn copy_server_grpc_reader_to_client_writer<W: AsyncWrite + Unpin>(
-    server_reader: Streaming<Hunk>,
-    mut client_writer: W,
-) -> io::Result<()> {
-    let mut server_reader = GrpcDataReaderStream::from_reader(server_reader);
     let mut read_buf = vec![0u8; BUF_SIZE];
 
     loop {

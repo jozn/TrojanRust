@@ -3,10 +3,9 @@ use clap::{ArgMatches, Command};
 use lazy_static::lazy_static;
 use log::info;
 use std::io::Result;
-use trojan_rust::config::base::{InboundConfig, InboundMode, OutboundConfig};
-use trojan_rust::config::parser::read_config;
-use trojan_rust::proxy::grpc;
-use trojan_rust::proxy::quic;
+use trojan_rust::config::base::*;
+use trojan_rust::config::parser::*;
+// use trojan_rust::proxy::quic_del;
 use trojan_rust::proxy::tcp;
 
 lazy_static! {
@@ -25,9 +24,9 @@ lazy_static! {
         .get_matches();
     static ref CONFIG_PATH: &'static str =
         ARGS.value_of("config").unwrap_or("./config/config.json");
-    static ref CONFIG: (InboundConfig, OutboundConfig) = {
-        let config = read_config(&CONFIG_PATH).expect("Error parsing the config file");
-        (config.inbound, config.outbound)
+    static ref CONFIG: (InboundConfig, OutboundConfig_Dep) = {
+        let config = read_config_dep(&CONFIG_PATH).expect("Error parsing the config file");
+        (config.inbound, config.outbound_dep)
     };
 }
 
@@ -40,23 +39,17 @@ async fn main() -> Result<()> {
         CONFIG_PATH.to_string()
     );
 
-    info!(
-        "Starting {:?} server to accept inbound traffic",
-        CONFIG.0.mode
-    );
+    // // TODO: Support more types of server, like UDP
+    // match CONFIG.0.mode_dep {
+    //     InboundMode::TCP => {
+    //         // tcp::server::start(&CONFIG.0, &CONFIG.1).await?;
+    //     }
+    //     InboundMode::QUIC => {
+    //         // quic_del::server::start(&CONFIG.0, &CONFIG.1).await?;
+    //     }
+    // }
 
-    // TODO: Support more types of server, like UDP
-    match CONFIG.0.mode {
-        InboundMode::TCP => {
-            tcp::server::start(&CONFIG.0, &CONFIG.1).await?;
-        }
-        InboundMode::GRPC => {
-            grpc::server::start(&CONFIG.0, &CONFIG.1).await?;
-        }
-        InboundMode::QUIC => {
-            quic::server::start(&CONFIG.0, &CONFIG.1).await?;
-        }
-    }
+    tcp::server::start(&CONFIG.0, &CONFIG.1).await?;
 
     Ok(())
 }

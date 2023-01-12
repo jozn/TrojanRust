@@ -2,3 +2,4 @@
 .vscode
 .idea
 config
+/dep_gone

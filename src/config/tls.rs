@@ -11,7 +11,7 @@ use rustls::RootCertStore;
 use rustls::{Certificate, ClientConfig, PrivateKey, ServerConfig};
 use rustls_pemfile::{read_one, Item};
 
-use crate::config::base::{InboundTlsConfig, OutboundTlsConfig};
+use crate::config::base::{InboundTlsConfig, OutboundTlsConfig_dep};
 
 /// Stub Certificate verifier that skips certificate verification. It is used when the user
 /// explicitly allows insecure TLS connection in configuration file, by setting
@@ -58,7 +58,7 @@ impl ServerCertVerifier for NoCertificateVerification {
 ///     }         
 /// }
 /// ```
-pub fn make_client_config(config: &OutboundTlsConfig) -> Arc<ClientConfig> {
+pub fn make_client_config(config: &OutboundTlsConfig_dep) -> Arc<ClientConfig> {
     if config.allow_insecure {
         let mut config = ClientConfig::builder()
             .with_safe_defaults()

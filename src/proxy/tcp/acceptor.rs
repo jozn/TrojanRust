@@ -2,7 +2,7 @@ use crate::config::base::InboundConfig;
 use crate::config::tls::make_server_config;
 use crate::protocol::common::request::InboundRequest;
 use crate::protocol::common::stream::StandardTcpStream;
-use crate::protocol::socks5;
+// use crate::protocol::socks5;
 use crate::protocol::trojan;
 use crate::proxy::base::SupportedProtocols;
 
@@ -29,7 +29,7 @@ impl TcpAcceptor {
     /// Instantiate a new acceptor based on InboundConfig passed by the user. It will generate the secret based on
     /// secret in the config file and the selected protocol and instantiate TLS acceptor is it is enabled.
     pub fn init(inbound: &InboundConfig) -> &'static Self {
-        let secret = match inbound.protocol {
+        let secret = match inbound.protocol_dep {
             SupportedProtocols::TROJAN if inbound.secret.is_some() => {
                 let secret = inbound.secret.as_ref().unwrap();
                 Sha224::digest(secret.as_bytes())
@@ -53,7 +53,7 @@ impl TcpAcceptor {
         TCP_ACCEPTOR.get_or_init(|| Self {
             tls_acceptor,
             port: inbound.port,
-            protocol: inbound.protocol,
+            protocol: inbound.protocol_dep,
             secret,
         })
     }
@@ -66,18 +66,18 @@ impl TcpAcceptor {
     ) -> Result<(InboundRequest, StandardTcpStream<T>)> {
         match self.protocol {
             // Socks5 with or without TLS
-            SupportedProtocols::SOCKS if self.tls_acceptor.is_some() => {
-                let tls_stream = self
-                    .tls_acceptor
-                    .as_ref()
-                    .unwrap()
-                    .accept(inbound_stream)
-                    .await?;
-                Ok(socks5::accept(StandardTcpStream::RustlsServer(tls_stream), self.port).await?)
-            }
-            SupportedProtocols::SOCKS => {
-                Ok(socks5::accept(StandardTcpStream::Plain(inbound_stream), self.port).await?)
-            }
+            // SupportedProtocols::SOCKS if self.tls_acceptor.is_some() => {
+            //     let tls_stream = self
+            //         .tls_acceptor
+            //         .as_ref()
+            //         .unwrap()
+            //         .accept(inbound_stream)
+            //         .await?;
+            //     Ok(socks5::accept(StandardTcpStream::RustlsServer(tls_stream), self.port).await?)
+            // }
+            // SupportedProtocols::SOCKS => {
+            //     Ok(socks5::accept(StandardTcpStream::Plain(inbound_stream), self.port).await?)
+            // }
             // Trojan with or without TLS
             SupportedProtocols::TROJAN if self.tls_acceptor.is_some() => {
                 let tls_stream = self

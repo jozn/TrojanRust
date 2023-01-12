@@ -1,4 +1,4 @@
-use crate::config::base::{InboundConfig, OutboundConfig};
+use crate::config::base::{InboundConfig, OutboundConfig_Dep};
 use crate::proxy::tcp::acceptor::TcpAcceptor;
 use crate::proxy::tcp::handler::TcpHandler;
 
@@ -9,7 +9,7 @@ use tokio::net::TcpListener;
 
 pub async fn start(
     inbound_config: &'static InboundConfig,
-    outbound_config: &'static OutboundConfig,
+    outbound_config: &'static OutboundConfig_Dep,
 ) -> Result<()> {
     // Extract the inbound client address
     let address = (inbound_config.address.clone(), inbound_config.port)

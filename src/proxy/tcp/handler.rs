@@ -1,11 +1,9 @@
-use crate::config::base::{OutboundConfig, OutboundMode};
+use crate::config::base::{OutboundConfig_Dep, OutboundMode_Dep};
 use crate::config::tls::{make_client_config, NoCertificateVerification};
 use crate::protocol::common::request::{InboundRequest, TransportProtocol};
 use crate::protocol::common::stream::StandardTcpStream;
 use crate::protocol::trojan::{self, handshake, HEX_SIZE};
 use crate::proxy::base::SupportedProtocols;
-use crate::transport::grpc_transport::grpc_service_client::GrpcServiceClient;
-use crate::transport::grpc_transport::Hunk;
 
 use futures::Stream;
 use log::info;
@@ -21,7 +19,7 @@ use tokio::sync::mpsc::{self, Sender};
 use tokio_rustls::TlsConnector;
 use tokio_stream::wrappers::ReceiverStream;
 use tokio_stream::StreamExt;
-use tonic::Status;
+// use tonic::Status;
 
 /// Static life time TCP server outbound traffic handler to avoid ARC
 /// The handler is initialized through init() function
@@ -31,7 +29,7 @@ static TCP_HANDLER: OnceCell<TcpHandler> = OnceCell::new();
 /// It may need to dial to remote using TCP, UDP and TLS, in which it will be responsible for
 /// establishing a tranport level connection and escalate it to application data stream.
 pub struct TcpHandler {
-    mode: OutboundMode,
+    mode: OutboundMode_Dep,
     protocol: SupportedProtocols,
     destination: Option<SocketAddr>,
     tls: Option<(Arc<ClientConfig>, ServerName)>,
@@ -42,7 +40,7 @@ impl TcpHandler {
     /// Instantiate a new Handler instance based on OutboundConfig passed by the user. It will evaluate the
     /// TLS option particularly to be able to later determine whether it should escalate the connection to
     /// TLS first or not.
-    pub fn init(outbound: &OutboundConfig) -> &'static TcpHandler {
+    pub fn init(outbound: &OutboundConfig_Dep) -> &'static TcpHandler {
         // Get outbound TLS configuration and host dns name if TLS is enabled
         let tls = match &outbound.tls {
             Some(cfg) => {
@@ -106,10 +104,10 @@ impl TcpHandler {
         request: InboundRequest,
     ) -> io::Result<()> {
         match self.mode {
-            OutboundMode::DIRECT => self.handle_direct_stream(request, inbound_stream).await?,
-            OutboundMode::TCP => self.handle_tcp_stream(request, inbound_stream).await?,
-            OutboundMode::QUIC => self.handle_quic_stream(request, inbound_stream).await?,
-            OutboundMode::GRPC => self.handle_grpc_stream(request, inbound_stream).await?,
+            OutboundMode_Dep::DIRECT => self.handle_direct_stream(request, inbound_stream).await?,
+            OutboundMode_Dep::TCP => self.handle_tcp_stream(request, inbound_stream).await?,
+            _ => (),
+            // OutboundMode_Dep::QUIC => self.handle_quic_stream(request, inbound_stream).await?,
         }
 
         Ok(())
@@ -174,12 +172,12 @@ impl TcpHandler {
             }
             // Handler currently doesn't support SOCKS protocol.
             // Also not sure if we should support SOCKS protocol for the scope of this project.
-            SupportedProtocols::SOCKS => {
-                return Err(Error::new(
-                    ErrorKind::Unsupported,
-                    "Proxy request can't have socks as proxy protocol",
-                ))
-            }
+            // SupportedProtocols::SOCKS => {
+            //     return Err(Error::new(
+            //         ErrorKind::Unsupported,
+            //         "Proxy request can't have socks as proxy protocol",
+            //     ))
+            // }
             SupportedProtocols::DIRECT => {
                 return Err(Error::new(
                     ErrorKind::Unsupported,
@@ -195,43 +193,43 @@ impl TcpHandler {
 
     /// #Experimental functionality
     /// QUIC support is currently experimental.
-    async fn handle_quic_stream<T: AsyncRead + AsyncWrite + Unpin + Send + 'static>(
-        &self,
-        request: InboundRequest,
-        inbound_stream: StandardTcpStream<T>,
-    ) -> io::Result<()> {
-        // Dial remote proxy server
-        let _roots = rustls::RootCertStore::empty();
-        let client_crypto = rustls::ClientConfig::builder()
-            .with_safe_defaults()
-            .with_custom_certificate_verifier(Arc::new(NoCertificateVerification {}))
-            .with_no_client_auth();
-        let mut endpoint = quinn::Endpoint::client("[::]:0".parse().unwrap()).unwrap();
-        endpoint.set_default_client_config(quinn::ClientConfig::new(Arc::new(client_crypto)));
+    // async fn handle_quic_stream<T: AsyncRead + AsyncWrite + Unpin + Send + 'static>(
+    //     &self,
+    //     request: InboundRequest,
+    //     inbound_stream: StandardTcpStream<T>,
+    // ) -> io::Result<()> {
+        // // Dial remote proxy server
+        // let _roots = rustls::RootCertStore::empty();
+        // let client_crypto = rustls::ClientConfig::builder()
+        //     .with_safe_defaults()
+        //     .with_custom_certificate_verifier(Arc::new(NoCertificateVerification {}))
+        //     .with_no_client_auth();
+        // let mut endpoint = quinn::Endpoint::client("[::]:0".parse().unwrap()).unwrap();
+        // endpoint.set_default_client_config(quinn::ClientConfig::new(Arc::new(client_crypto)));
+        //
+        // // Establish connection with remote proxy server using QUIC protocol
+        // let connection = endpoint
+        //     .connect("127.0.0.1:8081".parse().unwrap(), "example.com")
+        //     .unwrap()
+        //     .await
+        //     .unwrap();
+        //
+        // let quinn::NewConnection {
+        //     connection: conn, ..
+        // } = connection;
+        //
+        // let (mut server_writer, mut server_reader) = conn.open_bi().await.unwrap();
+        // let (mut client_reader, mut client_writer) = tokio::io::split(inbound_stream);
+        //
+        // handshake(&mut server_writer, &request, &self.secret).await?;
+        //
+        // tokio::select!(
+        //     _ = tokio::spawn(async move {tokio::io::copy(&mut client_reader, &mut server_writer).await}) => (),
+        //     _ = tokio::spawn(async move {tokio::io::copy(&mut server_reader, &mut client_writer).await}) => (),
+        // );
 
-        // Establish connection with remote proxy server using QUIC protocol
-        let connection = endpoint
-            .connect("127.0.0.1:8081".parse().unwrap(), "example.com")
-            .unwrap()
-            .await
-            .unwrap();
-
-        let quinn::NewConnection {
-            connection: conn, ..
-        } = connection;
-
-        let (mut server_writer, mut server_reader) = conn.open_bi().await.unwrap();
-        let (mut client_reader, mut client_writer) = tokio::io::split(inbound_stream);
-
-        handshake(&mut server_writer, &request, &self.secret).await?;
-
-        tokio::select!(
-            _ = tokio::spawn(async move {tokio::io::copy(&mut client_reader, &mut server_writer).await}) => (),
-            _ = tokio::spawn(async move {tokio::io::copy(&mut server_reader, &mut client_writer).await}) => (),
-        );
-
-        Ok(())
-    }
+        // Ok(())
+    // }
 
     /// Handle inbound TCP stream with TCP outbound proxy strategy. This function is used when the program serves as
     /// the client end of proxy chain, such that it read the plaintext data from the inbound stream and will encrypt
@@ -301,9 +299,9 @@ impl TcpHandler {
                     }
                 }
             }
-            SupportedProtocols::SOCKS => {
-                return Err(Error::new(ErrorKind::Unsupported, "Unsupported protocol"))
-            }
+            // SupportedProtocols::SOCKS => {
+            //     return Err(Error::new(ErrorKind::Unsupported, "Unsupported protocol"))
+            // }
             SupportedProtocols::DIRECT => {
                 return Err(Error::new(ErrorKind::Unsupported, "Unsupported protocol"));
             }
@@ -311,133 +309,5 @@ impl TcpHandler {
 
         info!("Connection finished");
         Ok(())
-    }
-
-    async fn handle_grpc_stream<T: AsyncRead + AsyncWrite + Unpin + Send>(
-        &self,
-        request: InboundRequest,
-        inbound_stream: StandardTcpStream<T>,
-    ) -> io::Result<()> {
-        // Remote GrpcService can not be None, otherwise we have no idea how to handle the proxy request
-        if self.destination == None {
-            return Err(Error::new(
-                ErrorKind::Unsupported,
-                "Destination can not be null",
-            ));
-        }
-
-        // Safety: We have checked previous for self.destination equals None condition, so that the unwrap will always work.
-        let endpoint = match self.tls {
-            None => format!("http://{}", self.destination.unwrap()),
-            Some(_) => format!("https://{}", self.destination.unwrap()),
-        };
-
-        // Establish GRPC connection with remote server
-        let mut connection = match GrpcServiceClient::connect(endpoint).await {
-            Ok(c) => c,
-            Err(_) => {
-                return Err(Error::new(
-                    ErrorKind::ConnectionRefused,
-                    "Failed to connect to remote GRPC server",
-                ))
-            }
-        };
-
-        let (tx, rx) = mpsc::channel(16);
-
-        // Write request to cursor buffer and send to the receiver stream
-        let mut cursor = Cursor::new(vec![0u8; 512]);
-        handshake(&mut cursor, &request, &self.secret).await?;
-        let (pos, mut data) = (cursor.position() as usize, cursor.into_inner());
-        data.truncate(pos);
-
-        if let Err(_) = tx.send(Hunk { data }).await {
-            return Err(Error::new(
-                ErrorKind::ConnectionRefused,
-                "Failed to send trojan request",
-            ));
-        }
-
-        // Connect to remote server
-        let server_reader = match connection.tun(ReceiverStream::from(rx)).await {
-            Ok(c) => c.into_inner(),
-            Err(_) => {
-                return Err(Error::new(
-                    ErrorKind::ConnectionRefused,
-                    "failed to write request data",
-                ))
-            }
-        };
-
-        let (client_reader, client_writer) = tokio::io::split(inbound_stream);
-
-        // Dispatch the request based on the proxy command
-        match request.command {
-            crate::protocol::common::command::Command::Connect => {
-                tokio::select!(
-                    _ = copy_client_reader_to_server_grpc_writer(client_reader, tx) => (),
-                    _ = copy_server_grpc_reader_to_client_writer(server_reader, client_writer) => ()
-                );
-            }
-            crate::protocol::common::command::Command::Udp => {
-                tokio::select!(
-                    _ = trojan::packet::copy_client_reader_to_server_grpc_writer(client_reader, tx, request) => (),
-                    _ = trojan::packet::copy_server_grpc_reader_to_client_writer(server_reader, client_writer) => (),
-                );
-            }
-            crate::protocol::common::command::Command::Bind => {
-                return Err(Error::new(
-                    ErrorKind::Unsupported,
-                    "Bind command is not supported in Trojan protocol",
-                ))
-            }
-        }
-
-        Ok(())
-    }
-}
-
-async fn copy_client_reader_to_server_grpc_writer<R: AsyncRead + Unpin>(
-    mut client_reader: R,
-    server_writer: Sender<Hunk>,
-) -> io::Result<()> {
-    loop {
-        let mut read_buf = vec![0u8; 4096];
-
-        let n = client_reader.read(&mut read_buf).await?;
-
-        read_buf.truncate(n);
-
-        if let Err(e) = server_writer.send(Hunk { data: read_buf }).await {
-            return Err(Error::new(
-                ErrorKind::ConnectionReset,
-                format!("Failed to send back server data, {}", e),
-            ));
-        }
-    }
-}
-
-async fn copy_server_grpc_reader_to_client_writer<
-    R: Stream<Item = Result<Hunk, Status>> + Unpin,
-    W: AsyncWrite + Unpin,
->(
-    mut server_reader: R,
-    mut client_writer: W,
-) -> io::Result<()> {
-    loop {
-        let hunk = match server_reader.next().await {
-            Some(data) => match data {
-                Ok(h) => h,
-                Err(_) => {
-                    return Err(Error::new(
-                        ErrorKind::ConnectionReset,
-                        "Received error from GRPC server",
-                    ))
-                }
-            },
-            None => return Ok(()),
-        };
-
-        client_writer.write_all(&hunk.data).await?;
     }
 }
