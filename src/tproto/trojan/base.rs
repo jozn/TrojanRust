@@ -1,8 +1,7 @@
-use crate::protocol::common::addr::IpAddress;
-use crate::protocol::common::atype::Atype;
-use crate::protocol::common::command::Command;
-use crate::protocol::common::request::{InboundProtocol, InbounndRequest};
-use crate::proxy::base::SupportedProtocols_Dep;
+use crate::tproto::common::addr::IpAddress;
+use crate::tproto::common::atype::Atype;
+use crate::tproto::common::command::Command;
+use crate::tproto::common::request::{InboundProtocol, InboundRequest};
 
 use constant_time_eq::constant_time_eq;
 
@@ -20,7 +19,6 @@ pub struct Request {
     atype: Atype,
     addr: IpAddress,
     port: u16,
-    proxy_protocol: SupportedProtocols_Dep,
 }
 
 impl Request {
@@ -30,7 +28,6 @@ impl Request {
         atype: Atype,
         addr: IpAddress,
         port: u16,
-        proxy_protocol: SupportedProtocols_Dep,
     ) -> Request {
         return Request {
             hex,
@@ -38,28 +35,25 @@ impl Request {
             atype,
             addr,
             port,
-            proxy_protocol,
         };
     }
 
     #[inline]
-    pub fn into_request(self) -> InbounndRequest {
+    pub fn into_request(self) -> InboundRequest {
         return match self.command {
-            Command::Udp => InbounndRequest::new(
+            Command::Udp => InboundRequest::new(
                 self.atype,
                 self.addr,
                 self.command,
                 self.port,
                 InboundProtocol::UDP,
-                self.proxy_protocol,
             ),
-            _ => InbounndRequest::new(
+            _ => InboundRequest::new(
                 self.atype,
                 self.addr,
                 self.command,
                 self.port,
                 InboundProtocol::TCP,
-                self.proxy_protocol,
             ),
         };
     }

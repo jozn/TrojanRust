@@ -1,8 +1,8 @@
-use crate::protocol::common::addr::{IpAddrPort, IpAddress};
-use crate::protocol::common::atype::Atype;
-use crate::protocol::common::request::InbounndRequest;
-use crate::protocol::trojan::base::CRLF;
-use crate::protocol::trojan::parser::parse_udp;
+use crate::tproto::common::addr::{IpAddrPort, IpAddress};
+use crate::tproto::common::atype::Atype;
+use crate::tproto::common::request::InboundRequest;
+use crate::tproto::trojan::base::CRLF;
+use crate::tproto::trojan::parser::parse_udp;
 // use crate::transport::grpc_stream::GrpcDataReaderStream;
 
 use log::debug;

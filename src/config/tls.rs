@@ -3,16 +3,16 @@ use log::error;
 use std::fs::File;
 use std::io::{BufReader, ErrorKind};
 use std::sync::Arc;
-use std::time::SystemTime;
+// use std::time::SystemTime;
 
-use rustls::client::{ServerCertVerified, ServerCertVerifier, ServerName};
+// use rustls::client::{ServerCertVerified, ServerCertVerifier, ServerName};
 use rustls::Error;
 use rustls::RootCertStore;
-use rustls::{Certificate, ClientConfig, PrivateKey, ServerConfig};
+use rustls::{Certificate, PrivateKey, ServerConfig};
 use rustls_pemfile::{read_one, Item};
 
-use crate::config::base::{InboundTlsConfig, OutboundTlsConfig_dep};
-
+use crate::config::base::InboundTlsConfig;
+/*
 /// Stub Certificate verifier that skips certificate verification. It is used when the user
 /// explicitly allows insecure TLS connection in configuration file, by setting
 ///
@@ -30,9 +30,9 @@ use crate::config::base::{InboundTlsConfig, OutboundTlsConfig_dep};
 /// ```
 ///
 /// The option is not recommended for production level services, but could be handy in testing stages.
-pub struct NoCertificateVerification {}
+pub struct NoCertificateVerification_Dep {}
 
-impl ServerCertVerifier for NoCertificateVerification {
+impl ServerCertVerifier for NoCertificateVerification_Dep {
     fn verify_server_cert(
         &self,
         _end_entity: &Certificate,
@@ -55,10 +55,10 @@ impl ServerCertVerifier for NoCertificateVerification {
 ///         tls: {
 ///             # Configurations here
 ///         }
-///     }         
+///     }
 /// }
 /// ```
-pub fn make_client_config(config: &OutboundTlsConfig_dep) -> Arc<ClientConfig> {
+pub fn make_client_config_dep(config: &OutboundTlsConfig_dep) -> Arc<ClientConfig> {
     if config.allow_insecure {
         let mut config = ClientConfig::builder()
             .with_safe_defaults()
@@ -67,7 +67,7 @@ pub fn make_client_config(config: &OutboundTlsConfig_dep) -> Arc<ClientConfig> {
 
         config
             .dangerous()
-            .set_certificate_verifier(Arc::new(NoCertificateVerification {}));
+            .set_certificate_verifier(Arc::new(NoCertificateVerification_Dep {}));
 
         Arc::new(config)
     } else {
@@ -88,7 +88,7 @@ pub fn make_client_config(config: &OutboundTlsConfig_dep) -> Arc<ClientConfig> {
         Arc::new(config)
     }
 }
-
+*/
 /// Create ServerConfig for rustls based on the configurations in the config.json file. The function
 /// will read the tls configuration under inbound,
 ///

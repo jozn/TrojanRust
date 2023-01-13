@@ -1,10 +1,10 @@
 use crate::config::base::InboundConfig;
 use crate::config::tls::make_server_config;
-use crate::protocol::common::request::InboundRequest;
+use crate::protocol::common::request::InbounndRequest;
 use crate::protocol::common::stream::StandardTcpStream;
 // use crate::protocol::socks5;
 use crate::protocol::trojan;
-use crate::proxy::base::SupportedProtocols;
+use crate::proxy::base::SupportedProtocols_Dep;
 
 use once_cell::sync::OnceCell;
 use sha2::{Digest, Sha224};
@@ -21,7 +21,7 @@ static TCP_ACCEPTOR: OnceCell<TcpAcceptor> = OnceCell::new();
 pub struct TcpAcceptor {
     tls_acceptor: Option<TlsAcceptor>,
     port: u16,
-    protocol: SupportedProtocols,
+    protocol: SupportedProtocols_Dep,
     secret: Vec<u8>,
 }
 
@@ -30,7 +30,7 @@ impl TcpAcceptor {
     /// secret in the config file and the selected protocol and instantiate TLS acceptor is it is enabled.
     pub fn init(inbound: &InboundConfig) -> &'static Self {
         let secret = match inbound.protocol_dep {
-            SupportedProtocols::TROJAN if inbound.secret.is_some() => {
+            SupportedProtocols_Dep::TROJAN if inbound.secret.is_some() => {
                 let secret = inbound.secret.as_ref().unwrap();
                 Sha224::digest(secret.as_bytes())
                     .iter()
@@ -63,7 +63,7 @@ impl TcpAcceptor {
     pub async fn accept<T: AsyncRead + AsyncWrite + Send + Unpin>(
         &self,
         inbound_stream: T,
-    ) -> Result<(InboundRequest, StandardTcpStream<T>)> {
+    ) -> Result<(InbounndRequest, StandardTcpStream<T>)> {
         match self.protocol {
             // Socks5 with or without TLS
             // SupportedProtocols::SOCKS if self.tls_acceptor.is_some() => {
@@ -79,7 +79,7 @@ impl TcpAcceptor {
             //     Ok(socks5::accept(StandardTcpStream::Plain(inbound_stream), self.port).await?)
             // }
             // Trojan with or without TLS
-            SupportedProtocols::TROJAN if self.tls_acceptor.is_some() => {
+            SupportedProtocols_Dep::TROJAN if self.tls_acceptor.is_some() => {
                 let tls_stream = self
                     .tls_acceptor
                     .as_ref()
@@ -92,7 +92,7 @@ impl TcpAcceptor {
                         .await?,
                 )
             }
-            SupportedProtocols::TROJAN => {
+            SupportedProtocols_Dep::TROJAN => {
                 Ok(trojan::accept(StandardTcpStream::Plain(inbound_stream), &self.secret).await?)
             }
             // Shutdown the connection if the protocol is currently unsupported

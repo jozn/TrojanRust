@@ -1,14 +1,14 @@
-use crate::protocol::common::addr::{IpAddrPort, IpAddress, IPV4_SIZE, IPV6_SIZE};
-use crate::protocol::common::atype::Atype;
-use crate::protocol::common::command::Command;
-use crate::protocol::trojan::base::{Request, HEX_SIZE};
-use crate::protocol::trojan::packet::TrojanUdpPacketHeader;
+use crate::tproto::common::addr::{IpAddrPort, IpAddress, IPV4_SIZE, IPV6_SIZE};
+use crate::tproto::common::atype::Atype;
+use crate::tproto::common::command::Command;
+use crate::tproto::trojan::base::{Request, HEX_SIZE};
+use crate::tproto::trojan::packet::TrojanUdpPacketHeader;
 
 use bytes::Bytes;
 use std::io::Result;
 use tokio::io::{AsyncRead, AsyncReadExt};
 
-pub async fn parse<T: AsyncRead + Unpin>(stream: &mut T) -> Result<Request> {
+pub async fn parse_trojan<T: AsyncRead + Unpin>(stream: &mut T) -> Result<Request> {
     // Read hex value for authentication
     let mut hex = vec![0u8; HEX_SIZE];
     stream.read_exact(&mut hex).await?;
@@ -49,14 +49,7 @@ pub async fn parse<T: AsyncRead + Unpin>(stream: &mut T) -> Result<Request> {
     // Read CLRF
     stream.read_u16().await?;
 
-    Ok(Request::new(
-        hex,
-        command,
-        atype,
-        addr,
-        port,
-        crate::proxy::base::SupportedProtocols_Dep::TROJAN,
-    ))
+    Ok(Request::new(hex, command, atype, addr, port))
 }
 
 pub async fn parse_udp<T: AsyncRead + Unpin>(reader: &mut T) -> Result<TrojanUdpPacketHeader> {

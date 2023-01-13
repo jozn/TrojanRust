@@ -1,4 +1,4 @@
-use crate::proxy::base::SupportedProtocols;
+use crate::proxy::base::SupportedProtocols_Dep;
 
 use serde::{Deserialize, Serialize};
 
@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 pub struct NewConfig {
     pub address: String,
     pub port: u16,
-    pub secret: Option<String>,
+    pub secret: Vec<String>,
     pub tls: Option<InboundTlsConfig>,
 }
 
@@ -24,11 +24,11 @@ pub struct Config {
     pub outbound_dep: OutboundConfig_Dep,
 }
 
-/// Inbound traffic supports the following 3 modes: 
-/// 
+/// Inbound traffic supports the following 3 modes:
+///
 /// TCP - Raw TCP byte stream traffic
 /// QUIC - Application level byte stream that is built on top of QUIC protocol
-/// 
+///
 /// TCP and QUIC are both byte streams from the abstractions of the low level implementation.
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum InboundMode_Dep {
@@ -37,7 +37,7 @@ pub enum InboundMode_Dep {
 }
 
 /// Outbound traffic supports 4 types of proxy modes:
-/// 
+///
 /// DIRECT: Directly send the data in the proxy request to the requested destination, either via raw TCP or UDP
 /// TCP: Forward the proxy traffic to a remote proxy server via raw TCP stream and have it take care of the traffic handling
 /// QUIC: Forward the proxy traffic to a remote proxy server via QUIC stream
@@ -51,7 +51,7 @@ pub enum OutboundMode_Dep {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct InboundConfig {
     pub mode_dep: InboundMode_Dep,
-    pub protocol_dep: SupportedProtocols,
+    pub protocol_dep: SupportedProtocols_Dep,
     pub address: String,
     pub port: u16,
     pub secret: Option<String>,
@@ -61,13 +61,12 @@ pub struct InboundConfig {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct OutboundConfig_Dep {
     pub mode: OutboundMode_Dep,
-    pub protocol: SupportedProtocols,
+    pub protocol: SupportedProtocols_Dep,
     pub address: Option<String>,
     pub port: Option<u16>,
     pub secret: Option<String>,
     pub tls: Option<OutboundTlsConfig_dep>,
 }
-
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct OutboundTlsConfig_dep {
