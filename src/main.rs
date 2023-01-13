@@ -7,7 +7,7 @@ use std::io::Result;
 use trojan_rust::config::base::*;
 use trojan_rust::config::parser::*;
 // use trojan_rust::proxy::quic_del;
-use trojan_rust::proxy::tcp;
+// use trojan_rust::proxy::tcp;
 use trojan_rust::server::server;
 
 #[tokio::main]
@@ -31,10 +31,7 @@ async fn main() -> Result<()> {
     // let config_path_nwe = new_args.get_one("config").unwrap_or("./config/config.json");
     let config_path_nwe = "./config.json";
 
-    info!(
-        "Reading trojan configuration file from {}",
-        config_path_nwe
-    );
+    info!("Reading trojan configuration file from {}", config_path_nwe);
 
     let config = read_new_config(&config_path_nwe).expect("Error parsing the config file");
 

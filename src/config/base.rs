@@ -1,5 +1,3 @@
-use crate::proxy::base::SupportedProtocols_Dep;
-
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
@@ -17,7 +15,7 @@ pub struct InboundTlsConfig {
 }
 
 /////////////////////////////////////// All deprecated /////////////////////////////////////
-
+/*
 #[derive(Serialize, Deserialize)]
 pub struct Config {
     pub inbound: InboundConfig,
@@ -73,3 +71,4 @@ pub struct OutboundTlsConfig_dep {
     pub host_name: String,
     pub allow_insecure: bool,
 }
+*/
