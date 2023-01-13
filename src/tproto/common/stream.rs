@@ -5,7 +5,6 @@ use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
 pub enum StandardTcpStream<T> {
     Plain(T),
     RustlsServer(tokio_rustls::server::TlsStream<T>),
-    // RustlsClient(tokio_rustls::client::TlsStream<T>),
 }
 
 impl<S: AsyncRead + AsyncWrite + Unpin + Send> AsyncRead for StandardTcpStream<S> {
@@ -18,7 +17,6 @@ impl<S: AsyncRead + AsyncWrite + Unpin + Send> AsyncRead for StandardTcpStream<S
         match self.get_mut() {
             StandardTcpStream::Plain(ref mut s) => Pin::new(s).poll_read(cx, buf),
             StandardTcpStream::RustlsServer(s) => Pin::new(s).poll_read(cx, buf),
-            // StandardTcpStream::RustlsClient(s) => Pin::new(s).poll_read(cx, buf),
         }
     }
 }
@@ -33,7 +31,6 @@ impl<S: AsyncRead + AsyncWrite + Unpin + Send> AsyncWrite for StandardTcpStream<
         match self.get_mut() {
             StandardTcpStream::Plain(ref mut s) => Pin::new(s).poll_write(cx, buf),
             StandardTcpStream::RustlsServer(ref mut s) => Pin::new(s).poll_write(cx, buf),
-            // StandardTcpStream::RustlsClient(ref mut s) => Pin::new(s).poll_write(cx, buf),
         }
     }
 
@@ -42,7 +39,6 @@ impl<S: AsyncRead + AsyncWrite + Unpin + Send> AsyncWrite for StandardTcpStream<
         match self.get_mut() {
             StandardTcpStream::Plain(ref mut s) => Pin::new(s).poll_flush(cx),
             StandardTcpStream::RustlsServer(ref mut s) => Pin::new(s).poll_flush(cx),
-            // StandardTcpStream::RustlsClient(ref mut s) => Pin::new(s).poll_flush(cx),
         }
     }
 
@@ -54,7 +50,6 @@ impl<S: AsyncRead + AsyncWrite + Unpin + Send> AsyncWrite for StandardTcpStream<
         match self.get_mut() {
             StandardTcpStream::Plain(ref mut s) => Pin::new(s).poll_shutdown(cx),
             StandardTcpStream::RustlsServer(ref mut s) => Pin::new(s).poll_shutdown(cx),
-            // StandardTcpStream::RustlsClient(ref mut s) => Pin::new(s).poll_shutdown(cx),
         }
     }
 }

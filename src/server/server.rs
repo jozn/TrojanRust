@@ -21,11 +21,6 @@ pub async fn start(cfg: &NewConfig) -> Result<()> {
     // Start the TCP server listener socket
     let listener = TcpListener::bind(address).await?;
 
-    // Create TCP server acceptor and handler
-    // let (acceptor, handler) = (
-    //     TcpAcceptor::init(&inbound_config),
-    //     TcpHandler::init(&outbound_config),
-    // );
     let user_holder = UserHolder {
         mp: Default::default(),
     };

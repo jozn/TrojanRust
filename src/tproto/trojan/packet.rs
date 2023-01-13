@@ -3,15 +3,12 @@ use crate::tproto::common::atype::Atype;
 use crate::tproto::common::request::InboundRequest;
 use crate::tproto::trojan::base::CRLF;
 use crate::tproto::trojan::parser::parse_udp;
-// use crate::transport::grpc_stream::GrpcDataReaderStream;
 
 use log::debug;
 use std::io::{self, Cursor, Error, ErrorKind};
 use std::net::{IpAddr, SocketAddr};
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 use tokio::net::UdpSocket;
-// use tokio::sync::mpsc::Sender;
-// use tonic::Streaming;
 
 /// Define the size of the buffer used to transport the data back and forth
 const BUF_SIZE: usize = 4096;
@@ -97,64 +94,3 @@ pub async fn copy_udp_socket_to_client_writer<W: AsyncWrite + Unpin>(
         client_writer.flush().await?;
     }
 }
-/*
-pub async fn copy_client_reader_to_udp_server_writer<
-    R: AsyncRead + Unpin,
-    W: AsyncWrite + Unpin,
->(
-    mut client_reader: R,
-    mut server_writer: W,
-    request: InboundRequest,
-) -> io::Result<()> {
-    let mut read_buf = vec![0u8; BUF_SIZE];
-
-    loop {
-        let size = client_reader.read(&mut read_buf).await?;
-
-        server_writer.write_u8(request.atype as u8).await?;
-
-        match request.addr_port.ip {
-            IpAddress::IpAddr(IpAddr::V4(addr)) => {
-                server_writer.write_all(&addr.octets()).await?;
-            }
-            IpAddress::IpAddr(IpAddr::V6(addr)) => {
-                server_writer.write_all(&addr.octets()).await?;
-            }
-            IpAddress::Domain(ref domain) => {
-                server_writer
-                    .write_u8(domain.as_bytes().len() as u8)
-                    .await?;
-                server_writer.write_all(domain.as_bytes()).await?;
-            }
-        }
-
-        server_writer.write_u16(request.addr_port.port).await?;
-        server_writer.write_u16(size as u16).await?;
-        server_writer.write_u16(CRLF).await?;
-        server_writer.write_all(&read_buf[..size]).await?;
-        server_writer.flush().await?;
-    }
-}
-
-pub async fn copy_udp_server_reader_to_client_writer<
-    R: AsyncRead + Unpin,
-    W: AsyncWrite + Unpin,
->(
-    mut server_reader: R,
-    mut client_writer: W,
-) -> io::Result<()> {
-    let mut read_buf = vec![0u8; BUF_SIZE];
-
-    loop {
-        let header = parse_udp(&mut server_reader).await?;
-
-        server_reader
-            .read_exact(&mut read_buf[..header.payload_size])
-            .await?;
-
-        client_writer
-            .write_all(&read_buf[..header.payload_size])
-            .await?;
-    }
-}
-*/

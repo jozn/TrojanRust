@@ -3,92 +3,12 @@ use log::error;
 use std::fs::File;
 use std::io::{BufReader, ErrorKind};
 use std::sync::Arc;
-// use std::time::SystemTime;
 
-// use rustls::client::{ServerCertVerified, ServerCertVerifier, ServerName};
 use rustls::Error;
 use rustls::RootCertStore;
 use rustls::{Certificate, PrivateKey, ServerConfig};
 use rustls_pemfile::{read_one, Item};
 
-use crate::config::base::InboundTlsConfig;
-/*
-/// Stub Certificate verifier that skips certificate verification. It is used when the user
-/// explicitly allows insecure TLS connection in configuration file, by setting
-///
-/// ```json
-/// {
-///     ...,
-///     outbound: {
-///         ...,
-///         tls: {
-///             ...,
-///             allow_insecure: true
-///         }
-///     }
-/// }
-/// ```
-///
-/// The option is not recommended for production level services, but could be handy in testing stages.
-pub struct NoCertificateVerification_Dep {}
-
-impl ServerCertVerifier for NoCertificateVerification_Dep {
-    fn verify_server_cert(
-        &self,
-        _end_entity: &Certificate,
-        _intermediates: &[Certificate],
-        _server_name: &ServerName,
-        _scts: &mut dyn Iterator<Item = &[u8]>,
-        _ocsp_response: &[u8],
-        _now: SystemTime,
-    ) -> Result<ServerCertVerified, Error> {
-        Ok(ServerCertVerified::assertion())
-    }
-}
-
-/// Create ClientConfig for rustls based on the configurations in the config.json file. The function
-/// will read the tls configuration under outbound,
-///
-/// ```json
-/// {
-///     outbound: {
-///         tls: {
-///             # Configurations here
-///         }
-///     }
-/// }
-/// ```
-pub fn make_client_config_dep(config: &OutboundTlsConfig_dep) -> Arc<ClientConfig> {
-    if config.allow_insecure {
-        let mut config = ClientConfig::builder()
-            .with_safe_defaults()
-            .with_root_certificates(RootCertStore::empty())
-            .with_no_client_auth();
-
-        config
-            .dangerous()
-            .set_certificate_verifier(Arc::new(NoCertificateVerification_Dep {}));
-
-        Arc::new(config)
-    } else {
-        let mut root_store = RootCertStore::empty();
-        root_store.add_server_trust_anchors(webpki_roots::TLS_SERVER_ROOTS.0.iter().map(|ta| {
-            rustls::OwnedTrustAnchor::from_subject_spki_name_constraints(
-                ta.subject,
-                ta.spki,
-                ta.name_constraints,
-            )
-        }));
-
-        let config = ClientConfig::builder()
-            .with_safe_defaults()
-            .with_root_certificates(root_store)
-            .with_no_client_auth();
-
-        Arc::new(config)
-    }
-}
-*/
 /// Create ServerConfig for rustls based on the configurations in the config.json file. The function
 /// will read the tls configuration under inbound,
 ///
