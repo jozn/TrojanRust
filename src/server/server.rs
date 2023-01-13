@@ -21,11 +21,14 @@ pub async fn start(cfg: &NewConfig) -> Result<()> {
     // Start the TCP server listener socket
     let listener = TcpListener::bind(address).await?;
 
-    let user_holder = UserHolder {
+    let mut user_holder = UserHolder {
         mp: Default::default(),
+        secrets: Default::default(),
     };
+    user_holder.add_secrets(&cfg.secret);
+
     let user_holder_arch = Arc::new(user_holder);
-    let acceptor = TcpAcceptor::init(cfg, user_holder_arch);
+    let acceptor = TcpAcceptor::new(cfg, user_holder_arch);
 
     // Enter server listener socket accept loop
     loop {

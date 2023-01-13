@@ -1,3 +1,4 @@
+use std::hash::Hash;
 use tokio::io::{AsyncRead, AsyncWrite};
 // use sha2::Digest;
 use super::*;
@@ -8,6 +9,8 @@ use crate::tproto::common::stream::StandardTcpStream;
 use crate::tproto::trojan;
 use crate::tproto::trojan::parse_trojan;
 use std::io::{Error, ErrorKind, Result};
+// use clap::error::ContextValue::Strings;
+// use serde_json::Value::String;
 use tokio_rustls::TlsAcceptor;
 
 /// Acceptor handles incomming connection by escalating them to application level data stream based on
@@ -18,11 +21,11 @@ pub struct TcpAcceptor {
     tls_acceptor: Option<TlsAcceptor>,
     port: u16,
     user_holder: UserHolderArc,
-    secret: Vec<u8>, // hex
+    dep_secret: Vec<u8>, // hex
 }
 
 impl TcpAcceptor {
-    pub fn init(cfg: &NewConfig, user_holder: UserHolderArc) -> Self {
+    pub fn new(cfg: &NewConfig, user_holder: UserHolderArc) -> Self {
         let tls_acceptor = match &cfg.tls {
             Some(tls) => match make_server_config(&tls) {
                 Some(cfg) => Some(TlsAcceptor::from(cfg)),
@@ -35,7 +38,7 @@ impl TcpAcceptor {
             tls_acceptor,
             port: cfg.port,
             // secret: b"xl87654321".to_vec(),
-            secret: secret_to_passeord_temp(b"xl87654321"),
+            dep_secret: secret_to_passeord_temp(b"xl87654321"),
             user_holder,
         }
     }
@@ -48,7 +51,7 @@ impl TcpAcceptor {
         match &self.tls_acceptor {
             None => Ok(trojan_accept(
                 StandardTcpStream::Plain(inbound_stream),
-                &self.secret,
+                &self.dep_secret,
                 self.user_holder.clone(),
             )
             .await?),
@@ -56,7 +59,7 @@ impl TcpAcceptor {
                 let tls_stream = tls_acceptor.accept(inbound_stream).await?;
                 let res = trojan_accept(
                     StandardTcpStream::RustlsServer(tls_stream),
-                    &self.secret,
+                    &self.dep_secret,
                     self.user_holder.clone(),
                 )
                 .await?;
@@ -76,12 +79,29 @@ pub async fn trojan_accept<T: AsyncRead + AsyncWrite + Unpin + Send>(
     let request = parse_trojan(&mut stream).await?;
 
     // Validate the request secret and decide if the connection should be accepted
-    if !request.validate(secret) {
+    // let hex = &request.hex.tostri;
+    use std::str;
+    let hex_opt = String::from_utf8(request.hex.clone());
+    if hex_opt.is_err() {
         return Err(Error::new(
             ErrorKind::InvalidInput,
             "Received invalid hex value",
         ));
     }
+    let hex = hex_opt.unwrap();
+    if !user_holder.secrets.contains_key(&hex) {
+        return Err(Error::new(
+            ErrorKind::InvalidInput,
+            "Received invalid hex value",
+        ));
+    }
+    // let s  = String::from("5");
+    // if !request.validate(secret) {
+    //     return Err(Error::new(
+    //         ErrorKind::InvalidInput,
+    //         "Received invalid hex value",
+    //     ));
+    // }
 
     Ok((request.into_request(), stream))
 }
@@ -101,15 +121,18 @@ pub fn secret_to_passeord_temp(sec: &[u8]) -> Vec<u8> {
     hash
 }
 
-pub fn secret_to_passeord(sec: &str) -> String {
+pub fn password_to_sha2_hex(sec: &str) -> String {
     use sha2::{Digest, Sha224};
 
     let hash = Sha224::digest(sec.as_bytes())
         .iter()
         .map(|x| format!("{:02x}", x))
-        .collect::<String>()
-        .as_bytes()
-        .to_vec();
+        .collect::<String>();
 
-    "st".to_string()
+    hash
+
+    // let mut buf = [0_u8;28];
+    // let hash = Sha224::digest(sec.as_bytes()).hash(&mut buf);
+    //
+    // format!("{:02x}", buf)
 }

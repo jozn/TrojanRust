@@ -14,7 +14,7 @@ pub const HEX_SIZE: usize = 56;
 pub const CRLF: u16 = 0x0D0A;
 
 pub struct Request {
-    hex: Vec<u8>,
+    pub hex: Vec<u8>,
     command: Command,
     atype: Atype,
     addr: IpAddress,

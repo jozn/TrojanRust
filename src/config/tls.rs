@@ -4,23 +4,13 @@ use std::fs::File;
 use std::io::{BufReader, ErrorKind};
 use std::sync::Arc;
 
+use crate::config::base::InboundTlsConfig;
 use rustls::Error;
 use rustls::RootCertStore;
 use rustls::{Certificate, PrivateKey, ServerConfig};
 use rustls_pemfile::{read_one, Item};
 
 /// Create ServerConfig for rustls based on the configurations in the config.json file. The function
-/// will read the tls configuration under inbound,
-///
-/// ```json
-/// {
-///     inbound: {
-///         tls: {
-///             # Configurations here
-///         }
-///     }         
-/// }
-/// ```
 pub fn make_server_config(config: &InboundTlsConfig) -> Option<Arc<ServerConfig>> {
     let certificates = match load_certs(&config.cert_path) {
         Ok(certs) => certs,
