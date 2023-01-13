@@ -13,6 +13,7 @@ use tokio_rustls::TlsAcceptor;
 /// Acceptor handles incomming connection by escalating them to application level data stream based on
 /// the configuration. It is also responsible for escalating TCP connection to TLS connection if the user
 /// enabled TLS.
+#[derive(Clone)]
 pub struct TcpAcceptor {
     tls_acceptor: Option<TlsAcceptor>,
     port: u16,

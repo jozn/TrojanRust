@@ -1,4 +1,5 @@
 pub mod acceptor;
+mod handler;
 pub mod server;
 
 use dashmap::DashMap;

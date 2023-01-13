@@ -1,3 +1,4 @@
+// use std::env::args;
 use clap::Arg;
 use clap::{ArgMatches, Command};
 use lazy_static::lazy_static;
@@ -7,6 +8,7 @@ use trojan_rust::config::base::*;
 use trojan_rust::config::parser::*;
 // use trojan_rust::proxy::quic_del;
 use trojan_rust::proxy::tcp;
+use trojan_rust::server::server;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -26,14 +28,15 @@ async fn main() -> Result<()> {
         )
         .get_matches();
 
-    let config_path_nwe = args.value_of("config").unwrap_or("./config/config.json");
+    // let config_path_nwe = new_args.get_one("config").unwrap_or("./config/config.json");
+    let config_path_nwe = "./config.json";
 
     info!(
         "Reading trojan configuration file from {}",
-        config_path.to_string()
+        config_path_nwe
     );
 
-    let config = read_new_config(&config_path).expect("Error parsing the config file");
+    let config = read_new_config(&config_path_nwe).expect("Error parsing the config file");
 
     // // TODO: Support more types of server, like UDP
     // match CONFIG.0.mode_dep {
@@ -45,11 +48,12 @@ async fn main() -> Result<()> {
     //     }
     // }
 
-    tcp::server::start(&CONFIG.0, &CONFIG.1).await?;
+    // tcp::server::start(&CONFIG.0, &CONFIG.1).await?;
+    server::start(&config).await?;
 
     Ok(())
 }
-
+/*
 /////////////////////////// Dep ////////////////////////
 lazy_static! {
     static ref args: ArgMatches = Command::new("Trojan Rust")
@@ -96,3 +100,4 @@ async fn main_old() -> Result<()> {
 
     Ok(())
 }
+*/
