@@ -1,0 +1,10 @@
+{
+    "address": "0.0.0.0",
+    "port": 443,
+    "secret": ["123123"],
+    "list": "./passwords.txt",
+    "tls": {
+        "cert_path": "/home/cty123/Projects/TrojanRust/config/cert.pem",
+        "key_path": "/home/cty123/Projects/TrojanRust/config/key.pem"
+    }
+}
