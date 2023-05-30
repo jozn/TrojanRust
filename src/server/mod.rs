@@ -28,4 +28,9 @@ impl UserHolder {
             self.secrets.insert(hex, true);
         }
     }
+
+    pub fn add_secret(&mut self, pass: &str) {
+            let hex = password_to_sha2_hex(pass);
+            self.secrets.insert(hex, true);
+    }
 }

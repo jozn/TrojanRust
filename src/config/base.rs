@@ -5,6 +5,7 @@ pub struct NewConfig {
     pub address: String,
     pub port: u16,
     pub secret: Vec<String>,
+    pub list: String,
     pub tls: Option<InboundTlsConfig>,
 }
 

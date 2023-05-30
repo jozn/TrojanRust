@@ -3,3 +3,6 @@
 .idea
 config
 /dep_gone
+cert.pem
+key.pem
+passwords.txt

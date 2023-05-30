@@ -27,6 +27,14 @@ pub async fn start(cfg: &NewConfig) -> Result<()> {
     };
     user_holder.add_secrets(&cfg.secret);
 
+    // Add list of secrest
+    if !cfg.list.is_empty() {
+        let secs = std::fs::read_to_string(&cfg.list).unwrap();
+        for sec in  secs.lines() {
+            user_holder.add_secret(sec);
+        }
+    }
+
     let user_holder_arch = Arc::new(user_holder);
     let acceptor = TcpAcceptor::new(cfg, user_holder_arch);
 
